@@ -9,3 +9,4 @@ pandas
 xgboost
 tqdm
 jupyter
+scikit-image
