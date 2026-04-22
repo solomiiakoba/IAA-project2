@@ -1,8 +1,5 @@
 """
-eda.py — Análise Exploratória do Dataset ShanghaiTech
-Projeto: Crowd Counting com ML Clássico
-PL3-G2 | IAA – Universidade de Aveiro
-
+eda.py produz análise exploratória do Dataset ShanghaiTech
 Uso:
     python eda.py --data_root ./data/ShanghaiTech
 
@@ -49,16 +46,12 @@ COLORS = {
 
 
 # ──────────────────────────────────────────────
-# 1. Carregamento dos dados
+# Carregamento dos dados
 # ──────────────────────────────────────────────
 
 def load_counts(data_root: str) -> dict:
     """
-    Percorre Part A e Part B (train + test) e extrai:
-      - contagem de pessoas por imagem
-      - nome do ficheiro
-      - resolução da imagem
-    Devolve um dicionário com listas para cada subconjunto.
+    Percorre Part A e Part B (train + test) e extrai contagem de pessoas por imagem, nome do ficheiro, resolução da imagem
     """
     data_root = Path(data_root)
     results = {}
@@ -126,7 +119,7 @@ def merge_part(data: dict, part: str) -> np.ndarray:
 
 
 # ──────────────────────────────────────────────
-# 2. Gráficos
+# Gráficos
 # ──────────────────────────────────────────────
 
 def plot_distribuicao(counts_A, counts_B, out_dir):
@@ -373,7 +366,7 @@ def plot_exemplos(data: dict, out_dir):
 
 
 # ──────────────────────────────────────────────
-# 3. Relatório textual
+# Relatório 
 # ──────────────────────────────────────────────
 
 def gerar_relatorio(data: dict, p33: float, p66: float, out_dir: Path):
@@ -381,7 +374,6 @@ def gerar_relatorio(data: dict, p33: float, p66: float, out_dir: Path):
     lines = []
     lines.append("=" * 60)
     lines.append("RELATÓRIO EDA — ShanghaiTech Crowd Counting")
-    lines.append("PL3-G2 | IAA – Universidade de Aveiro")
     lines.append("=" * 60)
     lines.append("")
 
@@ -441,10 +433,6 @@ def gerar_relatorio(data: dict, p33: float, p66: float, out_dir: Path):
         f.write("\n".join(lines))
     print(f"  Guardado: {report_path}")
 
-
-# ──────────────────────────────────────────────
-# 4. Main
-# ──────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(description="EDA do ShanghaiTech dataset")
