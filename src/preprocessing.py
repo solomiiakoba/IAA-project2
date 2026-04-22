@@ -48,7 +48,7 @@ LBP_N_BINS           = 64
 HOG_ORIENTATIONS     = 9
 HOG_PIXELS_PER_CELL  = (16, 16)
 HOG_CELLS_PER_BLOCK  = (2, 2)
-PCA_VARIANCE         = 0.95     # manter 95% da variância explicada
+PCA_VARIANCE         = 0.95     # manter 95% da variância
 
 
 # Data Augmentation
