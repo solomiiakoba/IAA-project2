@@ -2,19 +2,9 @@
 models.py — Orquestrador do Treino
 Projeto: Crowd Counting com ML Clássico
 PL3-G2 | IAA – Universidade de Aveiro
-
-Uso:
-    python models.py --data_dir ./processed
-
-Gera:
-    models_output/
-        regressao/          ← modelos .pkl
-        classificacao/      ← modelos .pkl
-        resultados/         ← gráficos + CSV com métricas
 """
 
 import argparse
-import json
 import pickle
 import numpy as np
 import pandas as pd
@@ -40,13 +30,14 @@ def main():
     data_dir = Path(args.data_dir)
     out_dir  = Path(args.out_dir)
 
-    for sub in ["regressao", "classificacao", "resultados"]:
+    # Criação da estrutura de diretórios
+    subfolders = ["regressao", "classificacao", "resultados/regressao", "resultados/classificacao"]
+    for sub in subfolders:
         (out_dir / sub).mkdir(parents=True, exist_ok=True)
 
     print("\n=== Treino dos Modelos ===\n")
 
-    # Carregar dados
-    print("A carregar dados processados...")
+    # Carregamento dos dados processados
     X_train     = np.load(data_dir / "X_train.npy")
     X_test      = np.load(data_dir / "X_test.npy")
     y_reg_train = np.load(data_dir / "y_reg_train.npy")
@@ -55,50 +46,46 @@ def main():
     print(f"  X_train : {X_train.shape}")
     print(f"  X_test  : {X_test.shape}")
 
-    # 1. Criar as Classes (Discretização da Variável Alvo)
-    print("A discretizar a variável alvo para classificação...")
-    
+    # Discretização da variável alvo para classificação
     def discretize(y):
         y_class = np.zeros_like(y, dtype=int)
-        y_class[y <= 102] = 0                           # Baixa densidade
-        y_class[(y > 102) & (y <= 248)] = 1             # Moderada
-        y_class[y > 248] = 2                            # Sobrelotação
+        y_class[y <= 102] = 0
+        y_class[(y > 102) & (y <= 248)] = 1
+        y_class[y > 248] = 2
         return y_class
 
     y_train_class = discretize(y_reg_train)
     y_test_class  = discretize(y_reg_test)
 
-    # Nomes das classes
     class_names = [
         "Baixa\n(≤ 102)",
         "Moderada\n(103-248)",
         "Sobrelotação\n(> 248)"
     ]
 
-    print(f"  Distribuição classes (train): {np.bincount(y_train_class)}")
+    print(f"  Distribuição classes (treino): {np.bincount(y_train_class)}")
 
-    # Treino 
+    # Execução do treino de Regressão e Classificação
     res_reg   = train_regression(X_train, y_reg_train, X_test, y_reg_test, out_dir)
     res_class = train_classification(X_train, y_train_class, X_test, y_test_class, class_names, out_dir)
 
-    # Guardar métricas
-    pd.DataFrame(res_reg).to_csv(out_dir / "resultados" / "regressao_metricas.csv",  index=False)
-    pd.DataFrame(res_class).to_csv(out_dir / "resultados" / "classificacao_metricas.csv", index=False)
+    # Exportação de métricas para CSV
+    pd.DataFrame(res_reg).to_csv(out_dir / "resultados/regressao/regressao_metricas.csv", index=False)
+    pd.DataFrame(res_class).to_csv(out_dir / "resultados/classificacao/classificacao_metricas.csv", index=False)
 
-    # Gráficos 
+    # Geração de visualizações
     print("\nA gerar gráficos...")
     plot_regression_comparison(res_reg, out_dir)
     plot_classification_comparison(res_class, out_dir)
 
-    # Scatter do melhor modelo de regressão (menor MAPE)
+    # Gráfico de dispersão para o melhor modelo de regressão (menor MAPE)
     best_name = min(res_reg, key=lambda x: x["MAPE"])["modelo"]
-    print(f"\n  Melhor modelo regressão (MAPE): {best_name}")
     best_path = out_dir / "regressao" / f"{best_name.lower().replace(' ', '_')}.pkl"
     with open(best_path, "rb") as f:
         best_model = pickle.load(f)
     plot_predictions_vs_real(best_model, X_test, y_reg_test, best_name, out_dir)
 
-    # Resumo
+    # Resumo final de resultados
     print("\n=== Resultados Finais ===\n")
     print("── Regressão ──")
     print(pd.DataFrame(res_reg).to_string(index=False))
@@ -106,7 +93,7 @@ def main():
     print("\n── Classificação ──")
     print(pd.DataFrame(res_class).to_string(index=False))
     
-    print(f"\nFicheiros em: {out_dir.resolve()}")
+    print(f"\nResultados guardados em: {out_dir.resolve()}")
 
 
 if __name__ == "__main__":

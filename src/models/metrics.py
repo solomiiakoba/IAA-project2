@@ -1,5 +1,5 @@
 """
-models/metrics.py — Métricas de Avaliação
+models/metrics.py — Funções de Cálculo de Métricas
 """
 
 import numpy as np
@@ -8,32 +8,27 @@ from sklearn.metrics import (
     mean_squared_error,
     accuracy_score,
     f1_score,
-    confusion_matrix,
 )
 
 
-# Regressão
-
 def mape(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """
-    Mean Absolute Percentage Error.
-    Ignora amostras com y_true == 0 para evitar divisão por zero.
-    Preferido ao RMSE quando a distribuição tem cauda longa.
-    """
+    """Calcula o Mean Absolute Percentage Error."""
     mask = y_true != 0
-    if not np.any(mask): return 0.0
+    if not np.any(mask):
+        return 0.0
     return float(np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100)
 
 
 def mdape(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """Median Absolute Percentage Error (para outliers)."""
+    """Calcula o Median Absolute Percentage Error."""
     mask = y_true != 0
-    if not np.any(mask): return 0.0
+    if not np.any(mask):
+        return 0.0
     return float(np.median(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100)
 
 
 def regression_metrics(y_true: np.ndarray, y_pred: np.ndarray, name: str = "") -> dict:
-    """Calcula MAE, RMSE, MAPE e MdAPE para um modelo de regressão."""
+    """Calcula as métricas de regressão (MAE, RMSE, MAPE, MdAPE)."""
     return {
         "modelo": name,
         "MAE":   round(mean_absolute_error(y_true, y_pred), 2),
@@ -43,15 +38,10 @@ def regression_metrics(y_true: np.ndarray, y_pred: np.ndarray, name: str = "") -
     }
 
 
-# Classificação
-
 def classification_metrics(y_true: np.ndarray, y_pred: np.ndarray, name: str = "") -> dict:
-    """Calcula Accuracy e F1-Score para um modelo de classificação."""
+    """Calcula as métricas de classificação (Accuracy, F1-macro)."""
     return {
         "modelo":   name,
         "Accuracy": round(accuracy_score(y_true, y_pred), 3),
-        "F1-Score": round(f1_score(y_true, y_pred, average="macro"), 3),
+        "F1-Score": round(f1_score(y_true, y_pred, average='macro'), 3),
     }
-
-def get_confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
-    return confusion_matrix(y_true, y_pred)
