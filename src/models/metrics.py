@@ -6,8 +6,6 @@ import numpy as np
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
-    accuracy_score,
-    f1_score,
     confusion_matrix,
 )
 
