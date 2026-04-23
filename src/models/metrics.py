@@ -6,6 +6,8 @@ import numpy as np
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
+    accuracy_score,
+    f1_score,
     confusion_matrix,
 )
 
@@ -19,12 +21,14 @@ def mape(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     Preferido ao RMSE quando a distribuição tem cauda longa.
     """
     mask = y_true != 0
+    if not np.any(mask): return 0.0
     return float(np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100)
 
 
 def mdape(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """Median Absolute Percentage Error (para outliers)."""
     mask = y_true != 0
+    if not np.any(mask): return 0.0
     return float(np.median(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100)
 
 
@@ -36,6 +40,17 @@ def regression_metrics(y_true: np.ndarray, y_pred: np.ndarray, name: str = "") -
         "RMSE":  round(np.sqrt(mean_squared_error(y_true, y_pred)), 2),
         "MAPE":  round(mape(y_true, y_pred), 2),
         "MdAPE": round(mdape(y_true, y_pred), 2),
+    }
+
+
+# Classificação
+
+def classification_metrics(y_true: np.ndarray, y_pred: np.ndarray, name: str = "") -> dict:
+    """Calcula Accuracy e F1-Score para um modelo de classificação."""
+    return {
+        "modelo":   name,
+        "Accuracy": round(accuracy_score(y_true, y_pred), 3),
+        "F1-Score": round(f1_score(y_true, y_pred, average="macro"), 3),
     }
 
 def get_confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
