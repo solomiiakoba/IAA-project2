@@ -1,0 +1,69 @@
+============================================================
+RELATÓRIO EDA — ShanghaiTech Crowd Counting
+============================================================
+
+── part_A_train_data ──
+  Nº imagens   : 300
+  Mínimo       : 33
+  Máximo       : 3138
+  Média        : 541.4
+  Mediana      : 378.0
+  Desvio padrão: 504.3
+  Percentil 25 : 238.8
+  Percentil 75 : 652.5
+
+── part_A_test_data ──
+  Nº imagens   : 182
+  Mínimo       : 66
+  Máximo       : 2256
+  Média        : 433.3
+  Mediana      : 307.5
+  Desvio padrão: 353.5
+  Percentil 25 : 211.0
+  Percentil 75 : 500.8
+
+── part_B_train_data ──
+  Nº imagens   : 400
+  Mínimo       : 12
+  Máximo       : 576
+  Média        : 122.9
+  Mediana      : 99.0
+  Desvio padrão: 93.8
+  Percentil 25 : 50.8
+  Percentil 75 : 161.0
+
+── part_B_test_data ──
+  Nº imagens   : 316
+  Mínimo       : 9
+  Máximo       : 539
+  Média        : 123.8
+  Mediana      : 93.0
+  Desvio padrão: 95.1
+  Percentil 25 : 54.8
+  Percentil 75 : 167.0
+
+── Dataset completo (A + B) ──
+  Total de imagens: 1198
+  Média global    : 275.1
+  Mediana global  : 163.5
+
+── Limiares de classificação (percentis 33/66) ──
+  Baixa densidade : ≤ 102 pessoas
+  Moderada        : 102 – 248 pessoas
+  Sobrelotação    : > 248 pessoas
+
+  Nº imagens — Baixa      : 398 (33.2%)
+  Nº imagens — Moderada   : 394 (32.9%)
+  Nº imagens — Sobrelotação: 406 (33.9%)
+
+── Justificação para uso de MAPE ──
+  A distribuição apresenta cauda longa acentuada.
+  O RMSE penaliza desproporcionalmente erros em imagens
+  com muitas pessoas (outliers de contagem elevada).
+  O MAPE normaliza o erro pelo valor real, sendo mais
+  adequado para comparações entre imagens com densidades
+  muito diferentes (5 pessoas vs 3000 pessoas).
+
+  Métricas recomendadas:
+    Regressão   → MAE, RMSE, MAPE, MdAPE
+    Classificação → Accuracy, F1-macro, Matriz de confusão

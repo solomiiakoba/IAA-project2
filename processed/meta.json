@@ -1,0 +1,31 @@
+{
+  "p33": 106.66999816894531,
+  "p66": 268.0,
+  "classes": {
+    "0": "Baixa densidade (≤ 107 pessoas)",
+    "1": "Densidade moderada (107–268 pessoas)",
+    "2": "Sobrelotação (> 268 pessoas)"
+  },
+  "pca_n_components": 453,
+  "pca_variance_explained": 0.9502502679824829,
+  "img_size": [
+    128,
+    128
+  ],
+  "augmentation": true,
+  "n_train_original": 700,
+  "n_train_after_aug": 4200,
+  "n_test": 498,
+  "feature_shape_before_pca": [
+    4200,
+    1924
+  ],
+  "feature_shape_after_pca": [
+    4200,
+    453
+  ],
+  "parts_used": [
+    "part_A",
+    "part_B"
+  ]
+}
