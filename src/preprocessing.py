@@ -3,7 +3,7 @@ Pipeline de Pré-processamento
 Augmentation, extração de features, normalização e PCA.
 
 Uso:
-    python preprocessing.py --data_root ./data/ShanghaiTech \
+    python3 preprocessing.py --data_root ./data/ShanghaiTech \
                              --out_dir ./processed \
                              --p33 102 --p66 248
 
@@ -41,7 +41,7 @@ from data_loader import load_split
 
 
 # Configuração
-IMG_SIZE             = (128, 128)
+IMG_SIZE             = (64, 64)
 LBP_RADIUS           = 3
 LBP_N_POINTS         = 8 * LBP_RADIUS
 LBP_N_BINS           = 64
