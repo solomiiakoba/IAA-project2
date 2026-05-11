@@ -4,7 +4,7 @@ Projeto: Crowd Counting com ML Clássico
 PL3-G2 | IAA – Universidade de Aveiro
 
 Uso:
-    python models.py --data_dir ./processed
+    python3 models.py --data_dir ./processed
 
 Gera:
     models_output/
