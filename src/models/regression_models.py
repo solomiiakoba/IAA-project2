@@ -1,6 +1,6 @@
 """
 models/regression_models.py - Modelos de Regressão
-Modelos (complexidade crescente): Ridge, Random Forest, XGBoost / GB, SVR 
+Modelos (complexidade crescente): Ridge, Random Forest, XGBoost / GB, SVR
 """
 
 import pickle
@@ -60,8 +60,8 @@ def get_models() -> list:
 
 
 def train_regression(X_train: np.ndarray, y_train: np.ndarray,
-                     X_test: np.ndarray,  y_test: np.ndarray,
-                     out_dir: Path) -> list:
+                    X_test: np.ndarray,  y_test: np.ndarray,
+                    out_dir: Path) -> list:
     """
     Treina todos os modelos de regressão, avalia no conjunto de teste
     e guarda cada modelo.
@@ -92,8 +92,8 @@ def train_regression(X_train: np.ndarray, y_train: np.ndarray,
         resultados.append(metrics)
 
         print(f"    MAE={metrics['MAE']}  RMSE={metrics['RMSE']}  "
-              f"MAPE={metrics['MAPE']}%  MdAPE={metrics['MdAPE']}%  "
-              f"CV-MAE={metrics['CV-MAE (5-fold)']}")
+            f"MAPE={metrics['MAPE']}%  MdAPE={metrics['MdAPE']}%  "
+            f"CV-MAE={metrics['CV-MAE (5-fold)']}")
 
         # Guardar modelo
         fname = name.lower().replace(" ", "_") + ".pkl"

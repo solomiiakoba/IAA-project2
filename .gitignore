@@ -43,6 +43,20 @@ venv.bak/
 # Data (Common in data projects, optional but recommended if data is large)
 # data/
 
+# Generated artifacts
+processed/
+models_output/
+eda_output/
+
+# Serialized / binary model artifacts
+*.pkl
+*.joblib
+*.npy
+*.npz
+*.onnx
+*.h5
+*.ckpt
+
 # OS
 .DS_Store
 Thumbs.db

@@ -18,12 +18,12 @@ from skimage.transform import resize
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
-from data_loader import load_split 
+from data_loader import load_split
 
 # Supressão de avisos do LBP sobre imagens floating-point
 warnings.filterwarnings("ignore", category=UserWarning, module="skimage.feature.texture")
 
-# Configurações Globais
+# Configurações Globais (defaults)
 IMG_SIZE             = (128, 128)
 LBP_RADIUS           = 3
 LBP_N_POINTS         = 8 * LBP_RADIUS
@@ -47,24 +47,25 @@ def augment(img: np.ndarray) -> list:
     return augmented
 
 
-def extract_features(img: np.ndarray) -> np.ndarray:
+def extract_features(img: np.ndarray, cfg: dict) -> np.ndarray:
     """Extrai vetor de features (HOG + LBP + Histograma de Cor)."""
-    img_resized = resize(img, IMG_SIZE, anti_aliasing=True)
+    img_resized = resize(img, cfg["img_size"], anti_aliasing=True)
     img_gray    = rgb2gray(img_resized)
 
     # 1. HOG
     hog_features = hog(
         img_gray,
-        orientations=HOG_ORIENTATIONS,
-        pixels_per_cell=HOG_PIXELS_PER_CELL,
-        cells_per_block=HOG_CELLS_PER_BLOCK,
+        orientations=cfg["hog_orientations"],
+        pixels_per_cell=cfg["hog_pixels_per_cell"],
+        cells_per_block=cfg["hog_cells_per_block"],
         visualize=False,
         feature_vector=True,
     )
 
     # 2. LBP
-    lbp = local_binary_pattern(img_gray, LBP_N_POINTS, LBP_RADIUS, method="uniform")
-    lbp_hist, _ = np.histogram(lbp.ravel(), bins=LBP_N_BINS, range=(0, LBP_N_BINS), density=True)
+    n_points = 8 * cfg["lbp_radius"]
+    lbp = local_binary_pattern(img_gray, n_points, cfg["lbp_radius"], method="uniform")
+    lbp_hist, _ = np.histogram(lbp.ravel(), bins=cfg["lbp_n_bins"], range=(0, cfg["lbp_n_bins"]), density=True)
 
     # 3. Histograma de cor RGB
     color_hist = []
@@ -76,36 +77,28 @@ def extract_features(img: np.ndarray) -> np.ndarray:
     return np.concatenate([hog_features, lbp_hist, color_hist])
 
 
-def process_samples(samples: list, augment_data: bool = False) -> tuple:
+def process_samples(samples: list, cfg: dict, augment_data: bool = False) -> tuple:
     """Extrai features para uma lista de amostras, aplicando augmentation se solicitado."""
     X, y = [], []
     for img, _locations, count in tqdm(samples, desc="  A extrair features"):
-        X.append(extract_features(img))
+        X.append(extract_features(img, cfg))
         y.append(count)
 
         if augment_data:
             for aug_img in augment(img):
-                X.append(extract_features(aug_img))
+                X.append(extract_features(aug_img, cfg))
                 y.append(count)
 
     return np.array(X, dtype=np.float32), np.array(y, dtype=np.float32)
 
 
-def make_classification_labels(y_reg: np.ndarray, p33: float, p66: float) -> np.ndarray:
-    """Converte contagens contínuas em classes discretas."""
-    y_clf = np.zeros(len(y_reg), dtype=np.int32)
-    y_clf[(y_reg > p33) & (y_reg <= p66)] = 1
-    y_clf[y_reg > p66] = 2
-    return y_clf
-
-
-def fit_transform_pipeline(X_train: np.ndarray, X_test: np.ndarray, out_dir: Path) -> tuple:
+def fit_transform_pipeline(X_train: np.ndarray, X_test: np.ndarray, out_dir: Path, pca_variance: float) -> tuple:
     """Aplica Normalização e PCA mantendo os transformadores para uso posterior."""
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled  = scaler.transform(X_test)
 
-    pca = PCA(n_components=PCA_VARIANCE, svd_solver="full")
+    pca = PCA(n_components=pca_variance, svd_solver="full")
     X_train_pca = pca.fit_transform(X_train_scaled)
     X_test_pca  = pca.transform(X_test_scaled)
 
@@ -119,19 +112,50 @@ def main():
     parser = argparse.ArgumentParser(description="Pipeline de pré-processamento")
     parser.add_argument("--data_root", type=str, default="./data/ShanghaiTech")
     parser.add_argument("--out_dir",   type=str, default="./processed")
+    parser.add_argument("--name",      type=str, default=None,
+                        help="Nome da subpasta de output (gerado automaticamente se omitido)")
     parser.add_argument("--part",      type=str, default="both", choices=["part_A", "part_B", "both"])
-    parser.add_argument("--p33", type=float, default=None, help="Limiar inferior")
-    parser.add_argument("--p66", type=float, default=None, help="Limiar superior")
     parser.add_argument("--no_augment", action="store_true", help="Desativar data augmentation")
+    # Parâmetros de feature extraction
+    parser.add_argument("--img_size",            type=int,   nargs=2, default=[128, 128])
+    parser.add_argument("--lbp_radius",          type=int,   default=3)
+    parser.add_argument("--lbp_n_bins",          type=int,   default=64)
+    parser.add_argument("--hog_orientations",    type=int,   default=9)
+    parser.add_argument("--hog_pixels_per_cell", type=int,   nargs=2, default=[16, 16])
+    parser.add_argument("--hog_cells_per_block", type=int,   nargs=2, default=[2, 2])
+    parser.add_argument("--pca_variance",        type=float, default=0.95)
     args = parser.parse_args()
 
+    cfg = {
+        "img_size":            tuple(args.img_size),
+        "lbp_radius":          args.lbp_radius,
+        "lbp_n_bins":          args.lbp_n_bins,
+        "hog_orientations":    args.hog_orientations,
+        "hog_pixels_per_cell": tuple(args.hog_pixels_per_cell),
+        "hog_cells_per_block": tuple(args.hog_cells_per_block),
+        "pca_variance":        args.pca_variance,
+    }
+
+    # Nome da subpasta: explícito ou gerado a partir dos parâmetros
+    if args.name:
+        run_name = args.name
+    else:
+        run_name = (
+            f"img{cfg['img_size'][0]}x{cfg['img_size'][1]}"
+            f"_hog{cfg['hog_orientations']}o{cfg['hog_pixels_per_cell'][0]}p"
+            f"_lbp{cfg['lbp_radius']}r{cfg['lbp_n_bins']}b"
+            f"_pca{int(cfg['pca_variance']*100)}"
+            f"{'_noaug' if args.no_augment else ''}"
+        )
+
     data_root = Path(args.data_root)
-    out_dir   = Path(args.out_dir)
+    out_dir   = Path(args.out_dir) / run_name
     out_dir.mkdir(parents=True, exist_ok=True)
 
     parts = ["part_A", "part_B"] if args.part == "both" else [args.part]
 
-    print("\n=== Pipeline de Pré-processamento ===\n")
+    print(f"\n=== Pipeline de Pré-processamento ===")
+    print(f"  Output: {out_dir}\n")
 
     # Carregamento de dados
     train_samples, test_samples = [], []
@@ -144,39 +168,36 @@ def main():
     print(f"  Teste  : {len(test_samples)} imagens")
 
     # Extração de features
-    X_train, y_reg_train = process_samples(train_samples, augment_data=augment_data)
-    X_test,  y_reg_test  = process_samples(test_samples,  augment_data=False)
-
-    # Definição de limiares
-    p33 = args.p33 if args.p33 is not None else float(np.percentile(y_reg_train, 33))
-    p66 = args.p66 if args.p66 is not None else float(np.percentile(y_reg_train, 66))
-
-    # Labels de classificação
-    y_clf_train = make_classification_labels(y_reg_train, p33, p66)
-    y_clf_test  = make_classification_labels(y_reg_test,  p33, p66)
+    X_train, y_reg_train = process_samples(train_samples, cfg, augment_data=augment_data)
+    X_test,  y_reg_test  = process_samples(test_samples,  cfg, augment_data=False)
 
     # Normalização e PCA
-    X_train_pca, X_test_pca, scaler, pca = fit_transform_pipeline(X_train, X_test, out_dir)
+    X_train_pca, X_test_pca, scaler, pca = fit_transform_pipeline(X_train, X_test, out_dir, cfg["pca_variance"])
 
     # Persistência de dados
     np.save(out_dir / "X_train.npy",     X_train_pca)
     np.save(out_dir / "X_test.npy",      X_test_pca)
     np.save(out_dir / "y_reg_train.npy", y_reg_train)
     np.save(out_dir / "y_reg_test.npy",  y_reg_test)
-    np.save(out_dir / "y_clf_train.npy", y_clf_train)
-    np.save(out_dir / "y_clf_test.npy",  y_clf_test)
 
     # Metadados
     meta = {
-        "p33": p33, "p66": p66,
+        "run_name": run_name,
         "pca_n_components": int(pca.n_components_),
-        "img_size": list(IMG_SIZE),
-        "augmentation": augment_data
+        "img_size": list(cfg["img_size"]),
+        "lbp_radius": cfg["lbp_radius"],
+        "lbp_n_bins": cfg["lbp_n_bins"],
+        "hog_orientations": cfg["hog_orientations"],
+        "hog_pixels_per_cell": list(cfg["hog_pixels_per_cell"]),
+        "hog_cells_per_block": list(cfg["hog_cells_per_block"]),
+        "pca_variance": cfg["pca_variance"],
+        "augmentation": augment_data,
+        "parts_used": parts,
     }
     with open(out_dir / "meta.json", "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
 
-    print("\n=== Pré-processamento concluído ===")
+    print(f"\n=== Pré-processamento concluído → {out_dir} ===")
 
 
 if __name__ == "__main__":
